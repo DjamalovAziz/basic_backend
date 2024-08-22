@@ -1,0 +1,7 @@
+[package]
+name = "_tonic"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tonic = "0.12.1"

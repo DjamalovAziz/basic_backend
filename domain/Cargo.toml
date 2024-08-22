@@ -1,0 +1,23 @@
+[package]
+name = "domain"
+
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.188"
+
+validator = "0.18.1"
+validator_derive = "0.18.1"
+
+async-trait = "0.1.73"
+
+jsonwebtoken = "9.1.0"
+
+chrono = "0.4.37"
+
+utoipa = {version = "4.2.0", features = ["actix_extras", "chrono"]}
+
+
+common = { path = "../common" }

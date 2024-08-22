@@ -1,0 +1,23 @@
+[package]
+name = "postgresql"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+diesel =  { version = "2.2.2", features = ["postgres", "r2d2"] }
+
+serde = "1.0.188"
+
+serde_with = "3.8.1"
+
+uuid = "1.10.0"
+
+async-trait = "0.1.73"
+
+dotenv = "0.15.0"
+
+log = "0.4.20"
+
+
+common = { path = "../../common" }
+domain = { path = "../../domain" }

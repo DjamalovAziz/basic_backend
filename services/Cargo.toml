@@ -1,0 +1,18 @@
+[package]
+name = "services"
+
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.73"
+
+chrono = "0.4.37"
+
+validator = "0.18.1"
+
+rand = "0.8.5"
+
+domain = { path = "../domain" }
+common = { path = "../common" }

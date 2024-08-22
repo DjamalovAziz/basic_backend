@@ -1,0 +1,16 @@
+[workspace]
+version = "0.1.1"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+members = [
+    "common",
+    # "databases/postgresql", 
+    "databases/_surrealdb",
+    "domain",
+    "interface/_actix_web", 
+    # "interface/_axum", 
+    "interface/_tonic",
+    "interface/_clap",
+    "core",
+    "services",
+]

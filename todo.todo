@@ -1,0 +1,442 @@
+Tasks {
+  Urgently {
+    DOING postgresql
+    TODO refresh token
+    TODO защиту от sql_injections
+    TODO tonic
+    TODO axum
+    TODO database для кэширования 
+    TODO подтверждение пользователя перед {
+      изменением пароля
+      созданием этого пользователя другим пользователем
+      добавлением пользователя в организацию
+      удалением своих нужных данных
+    }
+    TODO функционал приватности и публичности
+    TODO роль которую нельзя трогать даже Owner
+  }
+
+  Un-Urgently {
+    TODO реализовать функциональность admin максимально оптимизированно
+    TODO реализовать универсальность в repository implementation
+    TODO интеграция с платежной системой
+  }
+}
+
+
+Questions {
+
+}
+
+Важно от себя нечего лишнего не добавляй!!!
+
+Не меняя рассположение файлов!
+Переделай в axum!
+
+server.rs:_________________________________
+
+use actix_cors::Cors;
+use actix_files;
+use actix_web::middleware::Logger;
+use actix_web::{web, App, HttpServer};
+use dotenv::dotenv;
+use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
+use utoipa_redoc::{Redoc, Servable as RedocServable};
+use utoipa_scalar::{Scalar, Servable as ScalarServable};
+use utoipa_swagger_ui::SwaggerUi;
+
+use common::constant::{DEFAULT_MOUNT_PATH, DEFAULT_SERVE_FROM};
+use common::functions::get_env_or;
+use container::Container;
+
+use crate::api_docs::ApiDoc;
+use crate::controllers::admin::{
+    change_admin_password_handler, delete_admin_handler, get_admin_handler, get_me_admin_handler,
+    list_admins_handler, patch_admin_handler, post_admin_handler, reset_admin_password_handler,
+    signin_admin_handler,
+};
+use crate::controllers::management::{
+    change_user_password_handler, delete_relation_handler, delete_self_user_handler, get_self_user_handler,
+    get_user_handler, invite_to_branch_handler, list_my_relations_handler, list_relations_handler,
+    list_users_handler, patch_handler, patch_invitation_to_branch_handler, patch_self_user_handler,
+    post_user_handler, request_join_to_branch_handler, reset_user_password_handler, signin_user_handler,
+    signup_handler,
+};
+use crate::controllers::message::{
+    delete_telegram_group_handler, get_telegram_group_handler, list_telegram_groups_handler,
+    patch_telegram_group_handler, post_fcm_subscription_handler, post_subscription_handler,
+    post_telegram_group_handler,
+};
+use crate::controllers::organization::{
+    delete_branch_handler, delete_organization_handler, get_branch_handler, get_organization_handler,
+    list_branchs_handler, list_organizations_handler, patch_branch_handler, patch_organization_handler,
+    post_branch_handler, post_organization_handler,
+};
+
+pub async fn run_actix_web() -> std::io::Result<()> {
+    dotenv().ok();
+    env_logger::init();
+
+    let host: String = get_env_or("HOST", "0.0.0.0");
+    let port: u16 = get_env_or("PORT", "7003").parse().expect("Invalid PORT value");
+    let addr = format!("{}:{}", host, port);
+
+    let serve_from = get_env_or("SERVER_FROM", DEFAULT_SERVE_FROM);
+
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "actix_web=info");
+    }
+
+    let container = Container::new().await;
+    HttpServer::new(move || {
+        App::new()
+            //
+            //admin
+            .app_data(web::Data::from(container.admin_service.clone()))
+            //management
+            .app_data(web::Data::from(container.user_service.clone()))
+            .app_data(web::Data::from(container.relation_service.clone()))
+            //organization
+            .app_data(web::Data::from(container.organization_service.clone()))
+            .app_data(web::Data::from(container.branch_service.clone()))
+            //message
+            .app_data(web::Data::from(container.telegram_group_service.clone()))
+            .app_data(web::Data::from(container.fcm_subscription_service.clone()))
+            .app_data(web::Data::from(container.subscription_service.clone()))
+            //common
+            .app_data(web::Data::from(container.common_service.clone()))
+            // wrap
+            .wrap(Logger::default())
+            .wrap(Cors::permissive())
+            // actix-files
+            .service(actix_files::Files::new(DEFAULT_MOUNT_PATH, serve_from.as_str()))
+            //
+            // ==================== ADMIN ==================== //
+            .service(change_admin_password_handler)
+            .service(get_me_admin_handler)
+            .service(reset_admin_password_handler)
+            .service(signin_admin_handler)
+            // Basic
+            .service(delete_admin_handler)
+            .service(get_admin_handler)
+            .service(list_admins_handler)
+            .service(patch_admin_handler)
+            .service(post_admin_handler)
+            //
+            // ==================== USER ==================== //
+            .service(change_user_password_handler)
+            .service(reset_user_password_handler)
+            .service(signin_user_handler)
+            .service(signup_handler)
+            //
+            .service(post_user_handler)
+            .service(get_user_handler)
+            .service(list_users_handler)
+            //
+            .service(delete_self_user_handler)
+            .service(get_self_user_handler)
+            .service(patch_self_user_handler)
+            //
+            // ==================== Relation ==================== //
+            //
+            .service(delete_relation_handler)
+            .service(invite_to_branch_handler)
+            .service(list_my_relations_handler)
+            .service(list_relations_handler)
+            .service(patch_handler)
+            .service(patch_invitation_to_branch_handler)
+            .service(request_join_to_branch_handler)
+            //
+            // ==================== TelegramGroup ==================== //
+            .service(delete_telegram_group_handler)
+            .service(get_telegram_group_handler)
+            .service(list_telegram_groups_handler)
+            .service(patch_telegram_group_handler)
+            .service(post_telegram_group_handler)
+            //
+            // ==================== FCMSUBSCRIPTION ==================== //
+            .service(post_fcm_subscription_handler)
+            //
+            // ==================== SUBSCRIPTION ==================== //
+            .service(post_subscription_handler)
+            //
+            // ==================== ORGANIZATION ==================== //
+            .service(delete_organization_handler)
+            .service(get_organization_handler)
+            .service(list_organizations_handler)
+            .service(patch_organization_handler)
+            .service(post_organization_handler)
+            //
+            // ==================== BRANCH ==================== //
+            .service(delete_branch_handler)
+            .service(get_branch_handler)
+            .service(list_branchs_handler)
+            .service(patch_branch_handler)
+            .service(post_branch_handler)
+            //
+            // Documentation
+            .service(
+                RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi()).path("/rapidoc{_:.*}"),
+            )
+            .service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()))
+            .service(Redoc::with_url("/redoc{_:.*}", ApiDoc::openapi()))
+            .service(Scalar::with_url("/scalar{_:.*}", ApiDoc::openapi()))
+    })
+    .bind(&addr)?
+    .run()
+    .await?;
+    Ok(())
+}
+
+admin.rs:_________________________________
+
+use actix_web::{delete, get, patch, post, put, web, Error as ActixWebError, HttpResponse, Result};
+use common::errors::BasicError;
+
+use crate::middleware::AuthorizationService;
+
+use domain::dto::admin::{AdminDTO, PatchAdminDTO, PostAdminDTO, PutAdminPasswordDTO, SignInAdminDTO};
+use domain::dto::management::PhoneNumberDTO;
+use domain::repositories::admin::AdminQueryParams;
+use domain::repositories::repository::{ResultPaging, Token};
+use domain::services::admin::AdminService;
+
+// ==================== ADMIN ==================== //
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[put("/admins/change_password/{id}")]
+pub async fn change_admin_password_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    params: web::Path<String>,
+    data: web::Json<PutAdminPasswordDTO>,
+) -> Result<web::Json<String>, ActixWebError> {
+    service
+        .change_password(params.into_inner(), data.into_inner(), auth.id)
+        .await
+        .map_err(BasicError::from)?; // Преобразуем ошибки в BasicError и возвращаем их
+
+    Ok(web::Json("Password changed successfully".to_string()))
+}
+
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[get("/admins/me")]
+pub async fn get_me_admin_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+) -> Result<web::Json<AdminDTO>, ActixWebError> {
+    Ok(web::Json(service.get_me_admin(auth.id).await?.into()))
+}
+
+#[utoipa::path(tag = "admin")]
+#[put("/admins/reset_admin_password")]
+pub async fn reset_admin_password_handler(
+    service: web::Data<dyn AdminService>,
+    data: web::Json<PhoneNumberDTO>,
+) -> Result<web::Json<String>, ActixWebError> {
+    Ok(web::Json(service.reset_admin_password(&data.phone_number).await?))
+}
+
+#[utoipa::path(tag = "admin")]
+#[post("/admins/signin")]
+pub async fn signin_admin_handler(
+    service: web::Data<dyn AdminService>,
+    data: web::Json<SignInAdminDTO>,
+) -> Result<web::Json<Token>, ActixWebError> {
+    Ok(web::Json(service.signin_admin(data.into_inner()).await?))
+}
+
+// BASIC
+#[utoipa::path(tag = "admin", security(("token" = [])), params(AdminQueryParams))]
+#[get("/admins")]
+pub async fn list_admins_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    params: web::Query<AdminQueryParams>,
+) -> Result<web::Json<ResultPaging<AdminDTO>>, ActixWebError> {
+    Ok(web::Json(
+        service.list(params.into_inner(), auth.id).await?.paging_from(),
+    ))
+}
+
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[get("/admins/{id}")]
+pub async fn get_admin_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    params: web::Path<String>,
+) -> Result<web::Json<AdminDTO>, ActixWebError> {
+    Ok(web::Json(service.get(params.into_inner(), auth.id).await?.into()))
+}
+
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[post("/admins")]
+pub async fn post_admin_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    data: web::Json<PostAdminDTO>,
+) -> Result<web::Json<AdminDTO>, ActixWebError> {
+    Ok(web::Json(
+        service.create(data.into_inner(), auth.id).await?.into(),
+    ))
+}
+
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[patch("/admins/{id}")]
+pub async fn patch_admin_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    params: web::Path<String>,
+    data: web::Json<PatchAdminDTO>,
+) -> Result<web::Json<AdminDTO>, ActixWebError> {
+    Ok(web::Json(
+        service
+            .patch(params.into_inner(), data.into_inner(), auth.id)
+            .await?
+            .into(),
+    ))
+}
+
+#[utoipa::path(tag = "admin", security(("token" = [])))]
+#[delete("/admins/{id}")]
+pub async fn delete_admin_handler(
+    auth: AuthorizationService,
+    service: web::Data<dyn AdminService>,
+    params: web::Path<String>,
+) -> Result<HttpResponse, ActixWebError> {
+    service.delete(params.into_inner(), auth.id).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+middleware.rs:_________________________________
+
+use actix_web::error::{ErrorNotAcceptable, ErrorUnauthorized};
+use actix_web::{dev, Error, FromRequest, HttpRequest};
+use serde::{Deserialize, Serialize};
+
+use std::future::{ready, Future};
+use std::pin::Pin;
+
+use common::functions::decode_token;
+
+// ==================== MANAGEMENT ==================== //
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct SignInResponse {
+    pub message: String,
+    pub status: bool,
+    pub access_token: String,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Response {
+    pub message: String,
+    pub status: bool,
+}
+
+#[derive(Debug)]
+pub struct AuthorizationService {
+    pub id: String,
+}
+
+impl FromRequest for AuthorizationService {
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<AuthorizationService, Self::Error>>>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {
+        let auth = req.headers().get("Authorization");
+        Box::pin(ready(match auth {
+            Some(token) => {
+                let id = decode_token(token).unwrap_or_default();
+
+                Ok(AuthorizationService { id: id.to_string() })
+            }
+            _ => Err(ErrorUnauthorized(format!(
+                "{:#?}",
+                std::collections::HashMap::from([("error", "None auth token")])
+            ))),
+        }))
+    }
+}
+
+#[derive(Debug)]
+pub struct XOrganizationService {
+    pub organization_id: String,
+}
+
+impl FromRequest for XOrganizationService {
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<XOrganizationService, Self::Error>>>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {
+        let organization_id = req.headers().get("X-Organization-ID");
+        Box::pin(ready(match organization_id {
+            Some(organization_id) => Ok(XOrganizationService {
+                organization_id: organization_id.to_str().unwrap_or_default().to_string(),
+            }),
+            _ => Err(ErrorNotAcceptable(format!(
+                "{:#?}",
+                std::collections::HashMap::from([("error", "None organization_id")])
+            ))),
+        }))
+    }
+}
+
+#[derive(Debug)]
+pub struct XBranchService {
+    pub branch_id: String,
+}
+
+impl FromRequest for XBranchService {
+    type Error = Error;
+    type Future = Pin<Box<dyn Future<Output = Result<XBranchService, Self::Error>>>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {
+        let branch_id = req.headers().get("X-Branch-ID");
+        Box::pin(ready(match branch_id {
+            Some(branch_id) => Ok(XBranchService {
+                branch_id: branch_id.to_str().unwrap_or_default().to_string(),
+            }),
+            _ => Err(ErrorNotAcceptable(format!(
+                "{:#?}",
+                std::collections::HashMap::from([("error", "None branch_id")])
+            ))),
+        }))
+    }
+}
+Не меняя рассположение файлов!
+Переделай в axum!
+
+И в конце в файле main.rs:
+use _actix_web::server::run_actix_web;
+use _clap::commands::admin::run_admin_commands;
+use tokio::fs;
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    flexi_logger::Logger::try_with_env_or_str("info")?
+        .log_to_file(
+            flexi_logger::FileSpec::default()
+                .directory("basic_backend_logfiles")
+                .basename("daily-report")
+                .suffix("log"),
+        )
+        .print_message()
+        .rotate(
+            flexi_logger::Criterion::Age(flexi_logger::Age::Day),
+            flexi_logger::Naming::Timestamps,
+            flexi_logger::Cleanup::KeepLogFiles(30),
+        )
+        .duplicate_to_stderr(flexi_logger::Duplicate::Info)
+        .write_mode(flexi_logger::WriteMode::Async)
+        .start()?;
+
+    fs::create_dir_all("./media/images/avatars").await?;
+
+    run_admin_commands().await?;
+
+    run_actix_web().await?;
+
+    Ok(())
+}
+не чего существующего не меняя добавь созданный axum server!

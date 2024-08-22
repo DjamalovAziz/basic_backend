@@ -1,0 +1,18 @@
+[package]
+name = "basic_backend"
+
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+
+async-trait = "0.1.73"
+
+tokio = { version = "1.38.0", features = ["full"] }
+
+flexi_logger = { version = "0.28.5", features = ["async", "json"] }
+
+_actix_web = { path = "../interface/_actix_web", package = "_actix_web" }
+_clap = { path = "../interface/_clap", package = "_clap" }

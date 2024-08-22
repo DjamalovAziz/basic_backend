@@ -1,0 +1,23 @@
+[package]
+name = "_surrealdb"
+
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+dotenv = "0.15.0"
+
+log = "0.4.20"
+
+surrealdb = "1.5.2"
+
+serde = "1.0.188"
+
+async-trait = "0.1.73"
+
+serde_with = "3.8.1"
+
+common = { path = "../../common" }
+domain = { path = "../../domain" }
