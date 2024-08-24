@@ -9,7 +9,7 @@ members = [
     "domain",
     "interface/_actix_web", 
     # "interface/_axum", 
-    "interface/_tonic",
+    # "interface/_tonic",
     "interface/_clap",
     "core",
     "services",

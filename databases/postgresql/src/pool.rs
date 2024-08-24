@@ -12,7 +12,7 @@ pub fn postgresql_pool() -> Pool<ConnectionManager<PgConnection>> {
 
     let manager = ConnectionManager::<PgConnection>::new(get_env_or(
         "DATABASE_URL",
-        "postgres://postgres:postgres@localhost:7004/postgres",
+        "postgres://postgres:postgres@127.0.0.1:7004/postgres",
     ));
 
     let pool = Pool::builder().build(manager).expect("Failed to create pool.");

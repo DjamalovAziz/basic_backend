@@ -42,7 +42,7 @@ pub async fn run_axum() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     env_logger::init();
 
-    let host: String = get_env_or("HOST", "0.0.0.0");
+    let host: String = get_env_or("HOST", "127.0.0.1");
     let port: u16 = get_env_or("PORT", "7003").parse().expect("Invalid PORT value");
     let addr = format!("{}:{}", host, port);
 
@@ -165,7 +165,7 @@ pub async fn run_axum() -> Result<(), Box<dyn std::error::Error>> {
         )
         .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any));
 
-    // run it with hyper on localhost:3000
+    // run it with hyper on 127.0.0.1:3000
     let addr: SocketAddr = addr.parse().unwrap();
     println!("listening on {}", addr);
     axum::Server::bind(&addr).serve(app.into_make_service()).await?;

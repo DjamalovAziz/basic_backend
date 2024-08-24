@@ -1,0 +1,33 @@
+name: basic backend [ Build | Deploy ]
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Release
+        run: cargo build --release
+
+      - name: SSH Server Deploy
+        uses: easingthemes/ssh-deploy@main
+        with:
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SOURCE: target/release/${{ secrets.APP_NAME }}
+          TARGET: ~/${{ secrets.APP_NAME }}
+          SCRIPT_BEFORE: |
+            pm2 stop ${{ secrets.APP_NAME }}
+            rm -rf ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
+          SCRIPT_AFTER: |
+            chmod +x ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
+            pm2 start ${{ secrets.APP_NAME }}
