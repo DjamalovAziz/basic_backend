@@ -1,4 +1,4 @@
-name: basic backend [ Build | Deploy ]
+name: basic backend [ Build release | Deploy ]
 
 on:
   push:
@@ -26,8 +26,8 @@ jobs:
           SOURCE: target/release/${{ secrets.APP_NAME }}
           TARGET: ~/${{ secrets.APP_NAME }}
           SCRIPT_BEFORE: |
-            pm2 stop ${{ secrets.APP_NAME }}
-            rm -rf ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
+            sudo su pm2 stop ${{ secrets.APP_NAME }}
+            sudo su rm -rf ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
           SCRIPT_AFTER: |
-            chmod +x ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
-            pm2 start ${{ secrets.APP_NAME }}
+            sudo su chmod +x ${{ secrets.WORK_DIR }}/${{ secrets.APP_NAME }}
+            sudo su pm2 start ${{ secrets.APP_NAME }}
