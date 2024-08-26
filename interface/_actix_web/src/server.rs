@@ -37,7 +37,7 @@ use crate::controllers::organization::{
 
 pub async fn run_actix_web() -> std::io::Result<()> {
     dotenv().ok();
-    env_logger::init();
+    // env_logger::init();
 
     let host: String = get_env_or("HOST", "127.0.0.1");
     let port: u16 = get_env_or("PORT", "7003").parse().expect("Invalid PORT value");

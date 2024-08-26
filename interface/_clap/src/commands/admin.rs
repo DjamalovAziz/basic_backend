@@ -8,7 +8,7 @@ pub async fn run_admin_commands() -> Result<(), Box<dyn std::error::Error>> {
 
     let arg_matches = Command::new("admin")
         .version("0.0.1")
-        .author("<djamalov.muhammad.ali7@gmail.com>")
+        .author("<djamalov.aziz.mansurovich@gmail.com>")
         .about("Administrator menegment!")
         .subcommand(
             Command::new("signup-superadmin")
