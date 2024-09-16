@@ -4,7 +4,7 @@ version = "0.1.1"
 
 members = [
     "common",
-    # "databases/postgresql", 
+    "databases/postgresql", 
     "databases/_surrealdb",
     "domain",
     "interface/_actix_web", 

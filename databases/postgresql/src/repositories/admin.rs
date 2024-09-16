@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use diesel::associations::HasTable;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{self, ConnectionManager, Pool};
 use diesel::{prelude::*, sql_query};
@@ -18,13 +17,13 @@ use crate::data::admin::{
     AdminWithTotal, CreateAdminDiesel, GetAdminDiesel, PatchAdminDiesel, PutAdminPasswordDiesel,
 };
 
-pub struct AdminDieselRepository {
+pub struct AdminPostgresqlRepository {
     pub pool: Arc<Pool<ConnectionManager<PgConnection>>>,
 }
 
-impl AdminDieselRepository {
+impl AdminPostgresqlRepository {
     pub fn new(pool: Arc<Pool<ConnectionManager<PgConnection>>>) -> Self {
-        AdminDieselRepository { pool }
+        AdminPostgresqlRepository { pool }
     }
 
     fn get_conn(&self) -> Result<r2d2::PooledConnection<ConnectionManager<PgConnection>>, BasicError> {
@@ -35,7 +34,7 @@ impl AdminDieselRepository {
 }
 
 #[async_trait]
-impl AdminTrait for AdminDieselRepository {
+impl AdminTrait for AdminPostgresqlRepository {
     async fn change_password(&self, id: String, data: PutAdminPassword) -> BasicResult<String> {
         use crate::schemas::admin::admins::dsl::*;
 
@@ -118,44 +117,45 @@ impl AdminTrait for AdminDieselRepository {
     }
 
     async fn list(&self, query_params: AdminQueryParams) -> BasicResult<ResultPaging<Admin>> {
-        use crate::schemas::admin::admins::dsl::*;
+        todo!()
+        // use crate::schemas::admin::admins::dsl::*;
 
-        let query_data = query_params.query_params();
+        // let query_data = query_params.query_params();
 
-        let conn = &mut self.get_conn()?;
+        // let conn = &mut self.get_conn()?;
 
-        let results = admins
-            .select((
-                id,
-                password,
-                role,
-                phone_number,
-                created_at,
-                updated_at,
-                diesel::dsl::sql::<diesel::sql_types::BigInt>("(SELECT COUNT(*) FROM admins) AS total"),
-            ))
-            .filter(match query_data.result {
-                Some(value) => phone_number.like(value),
-                None => diesel::dsl::true_dsl(), // No filter if None
-            })
-            .offset(query_data.offset.unwrap_or(DEFAULT_OFFSET))
-            .limit(query_data.limit.unwrap_or(DEFAULT_LIMIT))
-            .load::<AdminWithTotal>(conn)
-            .map_err(|e| BasicError::server_error(format!("Failed to load admins: {}", e)))?;
+        // let results = admins
+        //     .select((
+        //         id,
+        //         password,
+        //         role,
+        //         phone_number,
+        //         created_at,
+        //         updated_at,
+        //         diesel::dsl::sql::<diesel::sql_types::BigInt>("(SELECT COUNT(*) FROM admins) AS total"),
+        //     ))
+        //     .filter(match query_data.result {
+        //         Some(value) => phone_number.like(value),
+        //         None => diesel::dsl::true_dsl(),
+        //     })
+        //     .offset(query_data.offset.unwrap_or(DEFAULT_OFFSET))
+        //     .limit(query_data.limit.unwrap_or(DEFAULT_LIMIT))
+        //     .load::<AdminWithTotal>(conn)
+        //     .map_err(|e| BasicError::server_error(format!("Failed to load admins: {}", e)))?;
 
-        if results.is_empty() {
-            return Err(BasicError::not_found_error(String::from("No admins found!")));
-        }
+        // if results.is_empty() {
+        //     return Err(BasicError::not_found_error(String::from("No admins found!")));
+        // }
 
-        let total = results.first().map(|res| res.total as usize).unwrap_or(0);
-        let admins: Vec<GetAdminDiesel> = results.into_iter().map(Into::into).collect();
+        // let total = results.first().map(|res| res.total as usize).unwrap_or(0);
+        // let admins: Vec<GetAdminDiesel> = results.into_iter().map(Into::into).collect();
 
-        Ok(ResultPaging::new(
-            total,
-            query_data.limit.unwrap_or(DEFAULT_LIMIT) as usize,
-            query_data.offset.unwrap_or(DEFAULT_OFFSET) as usize,
-            admins.into_iter().map(Into::into).collect(),
-        ))
+        // Ok(ResultPaging::new(
+        //     total,
+        //     query_data.limit.unwrap_or(DEFAULT_LIMIT) as usize,
+        //     query_data.offset.unwrap_or(DEFAULT_OFFSET) as usize,
+        //     admins.into_iter().map(Into::into).collect(),
+        // ))
     }
 
     async fn patch(&self, id: String, data: PatchAdmin) -> BasicResult<Admin> {

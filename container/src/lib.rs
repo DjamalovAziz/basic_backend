@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use postgresql::pool::postgresql_pool;
+use postgresql::repositories::admin::AdminPostgresqlRepository;
 
 use std::sync::Arc;
 
@@ -33,7 +35,8 @@ pub trait AsyncDefault {
 }
 
 pub struct Container {
-    pub admin_service: Arc<dyn AdminService>,
+    pub admin_service_surrealdb: Arc<dyn AdminService>,
+    pub admin_service_postgresql: Arc<dyn AdminService>,
 
     pub user_service: Arc<dyn UserService>,
     pub relation_service: Arc<dyn RelationService>,
@@ -50,36 +53,62 @@ pub struct Container {
 
 impl Container {
     pub async fn new() -> Self {
-        let db = Arc::new(surrealdb_pool().await.expect("Database connection error!"));
+        let surrealdb_pool = Arc::new(surrealdb_pool().await.expect("Surrealdb connection error!"));
+        let postgresql_pool = Arc::new(postgresql_pool().await);
 
-        // ==================== Repository ==================== //
+        // ==================== Surrealdb Repository ==================== //
         //  ADMIN  //
-        let admin_repository: Arc<dyn AdminTrait> = Arc::new(AdminSurrealRepository::new(Arc::clone(&db)));
+        let admin_repository: Arc<dyn AdminTrait> = Arc::new(AdminSurrealRepository::new(Arc::clone(&surrealdb_pool)));
 
         //  MANAGEMENT  //
-        let user_repository: Arc<dyn UserTrait> = Arc::new(UserSurrealRepository::new(Arc::clone(&db)));
+        let user_repository: Arc<dyn UserTrait> = Arc::new(UserSurrealRepository::new(Arc::clone(&surrealdb_pool)));
 
-        let relation_repository: Arc<dyn RelationTrait> = Arc::new(RelationSurrealRepository::new(Arc::clone(&db)));
+        let relation_repository: Arc<dyn RelationTrait> = Arc::new(RelationSurrealRepository::new(Arc::clone(&surrealdb_pool)));
 
         //  ORGANIZATION  //
         let organization_repository: Arc<dyn OrganizationTrait> =
-            Arc::new(OrganizationSurrealRepository::new(Arc::clone(&db)));
-        let branch_repository: Arc<dyn BranchTrait> = Arc::new(BranchSurrealRepository::new(Arc::clone(&db)));
+            Arc::new(OrganizationSurrealRepository::new(Arc::clone(&surrealdb_pool)));
+        let branch_repository: Arc<dyn BranchTrait> = Arc::new(BranchSurrealRepository::new(Arc::clone(&surrealdb_pool)));
 
         //  MESSAGE  //
         let telegram_group_repository: Arc<dyn TelegramGroupTrait> =
-            Arc::new(TelegramGroupSurrealRepository::new(Arc::clone(&db)));
+            Arc::new(TelegramGroupSurrealRepository::new(Arc::clone(&surrealdb_pool)));
         let fcm_subscription_repository: Arc<dyn FCMSubscriptionTrait> =
-            Arc::new(FCMSubscriptionSurrealRepository::new(Arc::clone(&db)));
+            Arc::new(FCMSubscriptionSurrealRepository::new(Arc::clone(&surrealdb_pool)));
         let subscription_repository: Arc<dyn SubscriptionTrait> =
-            Arc::new(SubscriptionSurrealRepository::new(Arc::clone(&db)));
+            Arc::new(SubscriptionSurrealRepository::new(Arc::clone(&surrealdb_pool)));
 
         //  COMMON  //
-        let common_repository: Arc<dyn CommonRepository> = Arc::new(CommonSurrealRepository::new(Arc::clone(&db)));
+        let common_repository: Arc<dyn CommonRepository> = Arc::new(CommonSurrealRepository::new(Arc::clone(&surrealdb_pool)));
+
+        // ==================== Postgresql Repository ==================== //
+        //  ADMIN  //
+        let admin_postgresql_repository: Arc<dyn AdminTrait> = Arc::new(AdminPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+
+        // //  MANAGEMENT  //
+        // let user_repository: Arc<dyn UserTrait> = Arc::new(UserPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+
+        // let relation_repository: Arc<dyn RelationTrait> = Arc::new(RelationPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+
+        // //  ORGANIZATION  //
+        // let organization_repository: Arc<dyn OrganizationTrait> =
+        //     Arc::new(OrganizationPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+        // let branch_repository: Arc<dyn BranchTrait> = Arc::new(BranchPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+
+        // //  MESSAGE  //
+        // let telegram_group_repository: Arc<dyn TelegramGroupTrait> =
+        //     Arc::new(TelegramGroupPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+        // let fcm_subscription_repository: Arc<dyn FCMSubscriptionTrait> =
+        //     Arc::new(FCMSubscriptionPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+        // let subscription_repository: Arc<dyn SubscriptionTrait> =
+        //     Arc::new(SubscriptionPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
+
+        // //  COMMON  //
+        // let common_repository: Arc<dyn CommonRepository> = Arc::new(CommonPostgresqlRepository::new(Arc::clone(&postgresql_pool)));
 
         // ==================== Service ==================== //
 
-        let admin_service = Arc::new(AdminServiceImpl {
+        let admin_service_surrealdb = Arc::new(AdminServiceImpl {
             repository: admin_repository.clone(),
         });
 
@@ -140,8 +169,15 @@ impl Container {
             admin_repository,
         });
 
+        // ==================== Postgresql Service ==================== //
+
+        let admin_service_postgresql = Arc::new(AdminServiceImpl {
+            repository: admin_postgresql_repository.clone(),
+        });
+
         Container {
-            admin_service,
+            admin_service_surrealdb,
+            admin_service_postgresql,
             user_service,
             relation_service,
             organization_service,

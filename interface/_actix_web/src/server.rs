@@ -54,7 +54,7 @@ pub async fn run_actix_web() -> std::io::Result<()> {
         App::new()
             //
             //admin
-            .app_data(web::Data::from(container.admin_service.clone()))
+            .app_data(web::Data::from(container.admin_service_surrealdb.clone()))
             //management
             .app_data(web::Data::from(container.user_service.clone()))
             .app_data(web::Data::from(container.relation_service.clone()))

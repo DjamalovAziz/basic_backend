@@ -4,7 +4,7 @@ use container::Container;
 use domain::dto::admin::{CreateAdminCLIDTO, PatchAdminCLIDTO, SignUpAdminCLIDTO};
 
 pub async fn run_admin_commands() -> Result<(), Box<dyn std::error::Error>> {
-    let service = Container::new().await.admin_service.clone();
+    let service = Container::new().await.admin_service_surrealdb.clone();
 
     let arg_matches = Command::new("admin")
         .version("0.0.1")
@@ -95,7 +95,7 @@ pub async fn run_admin_commands() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Admin signupped successfully: {:#?}", service.signup_cli(admin).await);
             }
             "create" => {
-                let admin = CreateAdminCLIDTO {
+                let admin = CreateAdminCLIDTO { 
                     password: subcommand_arg_matches
                         .get_one::<String>("password")
                         .cloned()

@@ -5,7 +5,7 @@ use log::info;
 
 use common::functions::get_env_or;
 
-pub fn postgresql_pool() -> Pool<ConnectionManager<PgConnection>> {
+pub async fn postgresql_pool() -> Pool<ConnectionManager<PgConnection>> {
     dotenv().ok();
 
     info!("Connecting postgresql...");

@@ -2,10 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use surrealdb::sql::Thing;
 
-use domain::dto::message::PostSubscriptionFieldDTO;
 use domain::models::message::{
-    CreateFCMSubscription, CreateSubscription, CreateTelegramGroup, FCMSubscription, PatchTelegramGroup, Subscription,
-    SubscriptionField, TelegramGroup,
+    CreateFCMSubscription, CreateSubscription, CreateSubscriptionField, CreateTelegramGroup, FCMSubscription, PatchTelegramGroup, Subscription, SubscriptionField, TelegramGroup
 };
 
 // ==================== TelegramGroup ==================== //
@@ -179,7 +177,7 @@ impl From<GetSubscriptionSurreal> for Subscription {
 
 #[derive(Debug, Serialize)]
 pub struct CreateSubscriptionSurreal {
-    pub subscription: PostSubscriptionFieldDTO,
+    pub subscription: CreateSubscriptionField,
 
     pub organization_id: Thing,
     pub branch_id: Thing,
@@ -191,7 +189,7 @@ pub struct CreateSubscriptionSurreal {
 impl From<CreateSubscription> for CreateSubscriptionSurreal {
     fn from(value: CreateSubscription) -> Self {
         CreateSubscriptionSurreal {
-            subscription: value.subscription,
+            subscription: CreateSubscriptionField::from(value.subscription),
 
             organization_id: Thing::from(("organization", value.organization_id.as_str())),
             branch_id: Thing::from(("branch", value.branch_id.as_str())),

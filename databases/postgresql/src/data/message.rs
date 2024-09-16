@@ -7,7 +7,6 @@ use uuid::Uuid;
 
 use crate::schemas::message::{fcm_subscriptions, subscriptions, telegram_groups};
 
-use domain::dto::message::PostSubscriptionFieldDTO;
 use domain::models::message::{
     CreateFCMSubscription, CreateSubscription, CreateTelegramGroup, FCMSubscription, PatchTelegramGroup,
     Subscription, SubscriptionField, TelegramGroup,
@@ -147,7 +146,7 @@ impl From<CreateFCMSubscription> for CreateFCMSubscriptionDiesel {
         CreateFCMSubscriptionDiesel {
             id: Uuid::new_v4().to_string(),
 
-            fcm_token: value.fcm_tokiden,
+            fcm_token: value.fcm_token,
 
             organization_id: value.organization_id,
             branch_id: value.branch_id,
@@ -188,12 +187,17 @@ impl From<GetSubscriptionDiesel> for Subscription {
     }
 }
 
+#[allow(non_snake_case)]
 #[derive(Debug, Insertable)]
 #[table_name = "subscriptions"]
 pub struct CreateSubscriptionDiesel {
     pub id: String,
 
-    pub subscription: PostSubscriptionFieldDTO,
+    pub endpoint: String,
+    pub expirationTime: Option<String>,
+    
+    pub p256dh: String,
+    pub auth: String,
 
     pub organization_id: String,
     pub branch_id: String,
@@ -207,7 +211,11 @@ impl From<CreateSubscription> for CreateSubscriptionDiesel {
         CreateSubscriptionDiesel {
             id: Uuid::new_v4().to_string(),
 
-            subscription: value.subscription,
+            endpoint: value.subscription.endpoint,
+            expirationTime: value.subscription.expirationTime,
+
+            p256dh: value.subscription.keys.p256dh,
+            auth: value.subscription.keys.auth,
 
             organization_id: value.organization_id,
             branch_id: value.branch_id,

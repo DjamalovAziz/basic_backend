@@ -11,4 +11,4 @@ async-trait = "0.1.73"
 services = { path = "../services"}
 domain = { path = "../domain"}
 _surrealdb = { path = "../databases/_surrealdb", package = "_surrealdb" }
-# postgresql = { path = "../databases/postgresql", package = "postgresql" }
+postgresql = { path = "../databases/postgresql", package = "postgresql" }

@@ -97,6 +97,20 @@ pub struct Subscription {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct CreateKeys {
+    pub p256dh: String,
+    pub auth: String,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateSubscriptionField {
+    pub endpoint: String,
+    pub expirationTime: Option<String>,
+    pub keys: CreateKeys,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateSubscription {
     pub subscription: PostSubscriptionFieldDTO,
 

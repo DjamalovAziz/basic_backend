@@ -18,6 +18,5 @@ dotenv = "0.15.0"
 
 log = "0.4.20"
 
-
 common = { path = "../../common" }
-domain = { path = "../../domain" }
+domain = { path = "../../domain" } 

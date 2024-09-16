@@ -18,7 +18,7 @@ table! {
         name -> Varchar,
 
         branch_location -> Nullable<Varchar>,
-        for_call -> Nullable<Varchar>, // Vec<ForCall>
+        for_call -> Nullable<Array<Integer>>, 
 
         organization_id -> Varchar,
 

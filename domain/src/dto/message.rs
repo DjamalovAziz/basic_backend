@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use validator_derive::Validate;
 
-use crate::models::message::{FCMSubscription, Subscription, SubscriptionField, TelegramGroup};
+use crate::models::message::{CreateKeys, CreateSubscriptionField, FCMSubscription, Subscription, SubscriptionField, TelegramGroup};
 
 // ==================== TelegramBot ==================== //
 #[derive(Debug, Serialize, ToSchema, IntoParams)]
@@ -124,13 +124,32 @@ pub struct PostKeysDTO {
     pub auth: String,
 }
 
+impl From<CreateKeys> for PostKeysDTO {
+    fn from(value: CreateKeys) -> Self {
+        PostKeysDTO {
+            p256dh: value.p256dh,
+            auth: value.auth,
+        }
+    }
+}
+
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug, Deserialize, ToSchema, Validate)]
 pub struct PostSubscriptionFieldDTO {
     #[validate(length(min = 1, max = 256, message = " can't be empty!"))]
     pub endpoint: String,
     pub expirationTime: Option<String>,
-    pub keys: PostKeysDTO,
+    pub keys: CreateKeys,
+}
+
+impl From<PostSubscriptionFieldDTO> for CreateSubscriptionField {
+    fn from(value: PostSubscriptionFieldDTO) -> Self {
+        CreateSubscriptionField {
+            endpoint: value.endpoint,
+            expirationTime: value.expirationTime,
+            keys: CreateKeys::from(value.keys),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams, Validate)]

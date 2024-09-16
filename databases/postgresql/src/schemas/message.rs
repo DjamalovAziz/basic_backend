@@ -34,7 +34,11 @@ table! {
     subscriptions (id) {
         id -> Varchar,
 
-        fcm_token -> Varchar, // SubscriptionField
+        endpoint -> Varchar,
+        expirationTime -> Nullable<Varchar>,
+
+        p256dh -> Varchar,
+        auth -> Varchar,
 
         organization_id -> Varchar,
         branch_id -> Varchar,
